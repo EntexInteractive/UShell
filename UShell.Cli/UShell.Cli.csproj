@@ -1,0 +1,52 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <OutputType>Exe</OutputType>
+        <Nullable>enable</Nullable>
+        <TargetFramework>net9.0</TargetFramework>
+        <Configurations>Debug;Release;Analyze</Configurations>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <AssemblyName>UShell</AssemblyName>
+        <AssemblyVersion>0.0.0.0</AssemblyVersion>
+        <Company>Entex Interactive, LLC</Company>
+        <Copyright>Copyright $(Company). All Rights Reserved.</Copyright>
+        <FileVersion>$(AssemblyVersion)</FileVersion>
+        <Version>$(VersionPrefix)$(AssemblyVersion)</Version>
+        <Authors>$(Company)</Authors>
+    </PropertyGroup>
+
+    <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+        <DefineConstants>$(DefineConstants);TRACE</DefineConstants>
+        <TreatWarningsAsErrors>True</TreatWarningsAsErrors>
+        <Optimize>True</Optimize>
+    </PropertyGroup>
+    <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+        <DefineConstants>$(DefineConstants);DEBUG;TRACE</DefineConstants>
+        <TreatWarningsAsErrors>False</TreatWarningsAsErrors>
+        <DebugSymbols>True</DebugSymbols>
+        <DebugType>Full</DebugType>
+    </PropertyGroup>
+    <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Analyze|AnyCPU'">
+        <TreatWarningsAsErrors>False</TreatWarningsAsErrors>
+        <RunAnalyzersDuringBuild>True</RunAnalyzersDuringBuild>
+        <EnforceCodeStyleInBuild>True</EnforceCodeStyleInBuild>
+        <GenerateDocumentationFile>True</GenerateDocumentationFile>
+    </PropertyGroup>
+
+    <ItemGroup>
+      <PackageReference Include="Serilog" Version="4.4.0" />
+      <PackageReference Include="Serilog.Sinks.Console" Version="6.1.1" />
+      <PackageReference Include="System.CommandLine" Version="2.0.10" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <Using Include="Serilog" />
+        <Using Include="System.CommandLine" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\UShell.Core\UShell.Core.csproj" />
+      <ProjectReference Include="..\UShell.Unreal\UShell.Unreal.csproj" />
+    </ItemGroup>
+
+</Project>
