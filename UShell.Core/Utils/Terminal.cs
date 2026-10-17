@@ -5,6 +5,7 @@ namespace UShell.Core.Utils
 {
     public enum OperatingSystem
     {
+        Any,
         Windows,
         Linux,
         MacOS
@@ -16,6 +17,8 @@ namespace UShell.Core.Utils
     public static class Terminal
     {
         private static readonly object _consoleLock = new();
+
+        public static bool IsDebugging = false;
         
         public static OperatingSystem Platform =>
             System.OperatingSystem.IsWindows() ? OperatingSystem.Windows :
@@ -40,38 +43,51 @@ namespace UShell.Core.Utils
             }
         }
 
-        public static void WriteArray(string message, IEnumerable<string> elements)
+        public static void WriteArray(string message, IEnumerable<object> elements, int limit = 100)
         {
             lock (_consoleLock)
             {
-                string[] array = elements.Order().ToArray();
-                if (array.Length > 0)
+                object[] array = elements.Order().ToArray();
+                int display = Math.Min(limit, elements.Count());
+                if (display > 0)
                 {
-                    Console.WriteLine($"> {message}:");
-                    foreach (string item in array)
+                    WriteLine($" {message} ({elements.Count():N0}):");
+                    for (int i = 0; i < display; i++)
                     {
-                        Console.WriteLine($">   - {item}");
+                        WriteLine($"   {array.ElementAt(i)}");
+                    }
+                    
+                    int remaining = elements.Count() - display;
+                    if (remaining > 0)
+                    {
+                        WriteLine($"{remaining:N0} entr{(remaining == 1 ? "y" : "ies")} remaining...", ConsoleColor.DarkGray);
                     }
                 }
                 else
                 {
-                    Console.WriteLine($"> {message}: 0");
+                    WriteLine($" {message}: Empty");
                 }
             }
         }
         
-        public static void Progress(double part, double total, TimeSpan elapsed)
+        public static void Progress(string message, double part, double total, TimeSpan elapsed)
         {
+            if (part <= 0 || IsDebugging) return;
+            Console.ForegroundColor = ConsoleColor.DarkGray;
+            
             double percent = part / total;
-            string percentStr = $"> Progress: {Convert.ToInt32(percent * 100):D2}%";
+            string percentStr = $"> {message}: {Convert.ToInt32(percent * 100):D2}%";
+            if (part >= total)
+            {
+                Console.ResetColor();
+                Console.WriteLine();
+            }
 
-            TimeSpan remaining;
             double remainingMs = elapsed.TotalMilliseconds * (total - part) / part;
-            if (remainingMs <= TimeSpan.MaxValue.TotalMilliseconds) remaining = TimeSpan.FromMilliseconds(remainingMs);
-            else remaining = TimeSpan.MaxValue;
+            TimeSpan remaining = remainingMs <= TimeSpan.MaxValue.TotalMilliseconds ? TimeSpan.FromMilliseconds(remainingMs) : TimeSpan.MaxValue;
 
             string remainingStr = $"{remaining.Hours:00}:{remaining.Minutes:00}:{remaining.Seconds:00} remaining";
-            int barWidth = Console.WindowWidth - percentStr.Length - remainingStr.Length - 4;
+            int barWidth = Math.Max(message.Length + 1, Console.WindowWidth - percentStr.Length - remainingStr.Length - 4);
             int filledWidth = Convert.ToInt32(percent * barWidth);
 
             StringBuilder progressBar = new StringBuilder(barWidth);
@@ -88,33 +104,33 @@ namespace UShell.Core.Utils
             Console.Write($"\r{percentStr} [{progressBar.ToString()}] {remainingStr}");
         }
         
-        public static void Error(object message)
+        public static void PrintError(object message)
         {
-            WriteLine(message, ConsoleColor.Red);
+            if(!IsDebugging) WriteLine(message, ConsoleColor.Red);
             Log.Error(message.ToString()!);
         }
         
-        public static void Error(Exception exception)
+        public static void PrintError(Exception exception)
         {
-            WriteLine(exception.Message, ConsoleColor.Red);
+            if(!IsDebugging) WriteLine(exception.Message, ConsoleColor.Red);
             Log.Error(exception.GetBaseException().ToString());
         }
         
-        public static void Information(object message)
+        public static void PrintInfo(object message)
         {
-            WriteLine(message, ConsoleColor.White);
+            if(!IsDebugging) WriteLine(message, ConsoleColor.White);
             Log.Information(message.ToString()!);
         }
         
-        public static void Success(object message)
+        public static void PrintSuccess(object message)
         {
-            WriteLine(message, ConsoleColor.Green);
+            if(!IsDebugging) WriteLine(message, ConsoleColor.Green);
             Log.Information(message.ToString()!);
         }
 
-        public static void Warning(object message)
+        public static void PrintWarning(object message)
         {
-            WriteLine(message, ConsoleColor.Yellow);
+            if(!IsDebugging) WriteLine(message, ConsoleColor.Yellow);
             Log.Warning(message.ToString()!);
         }
     }

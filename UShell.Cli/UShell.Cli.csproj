@@ -3,7 +3,7 @@
     <PropertyGroup>
         <OutputType>Exe</OutputType>
         <Nullable>enable</Nullable>
-        <TargetFramework>net9.0</TargetFramework>
+        <TargetFramework>net10.0</TargetFramework>
         <Configurations>Debug;Release;Analyze</Configurations>
         <ImplicitUsings>enable</ImplicitUsings>
         <AssemblyName>UShell</AssemblyName>
@@ -46,7 +46,8 @@
 
     <ItemGroup>
       <ProjectReference Include="..\UShell.Core\UShell.Core.csproj" />
-      <ProjectReference Include="..\UShell.Unreal\UShell.Unreal.csproj" />
+      <ProjectReference Include="..\UShell.IO\UShell.IO.csproj" />
+      <ProjectReference Include="..\UShell.Tests\UShell.Tests.csproj" />
     </ItemGroup>
 
 </Project>

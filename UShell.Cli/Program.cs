@@ -1,26 +1,36 @@
 ﻿using System.CommandLine.Help;
 using System.Reflection;
-using UShell.Core.Modules;
+using Serilog.Events;
+using UShell.Core;
 using UShell.Core.Utils;
 
 namespace UShell.Cli
 {
     internal static class Program
     {
-        private static Option<bool> _versionOption = new Option<bool>("--version", ["-v"]);
+        private static Option<bool> _versionOption = new("--version", ["-v"]);
+        private static Option<bool> _debugOption = new("-log");
 
         static async Task Main(string[] args)
         {
-            AssemblyName assembly = Assembly.GetExecutingAssembly().GetName();
-            Log.Logger = new LoggerConfiguration().MinimumLevel.Debug().CreateLogger();
-
-            Log.Information($"{assembly.Name} [Version {assembly.Version}]");
-            RootCommand rootCommand = new("UShell - A universal cross-platform system shell with expandable functionality.");
+            RootCommand rootCommand = new("UShell - A cross-platform modular command line.");
             rootCommand.Options.RemoveAt(1);
-
-            ModuleManager.RegisterModules(rootCommand);
-            rootCommand.SetAction(HandleRootCommand);
             rootCommand.Add(_versionOption);
+            rootCommand.Add(_debugOption);
+            
+            ParseResult parseResult = rootCommand.Parse(args);
+            Terminal.IsDebugging = parseResult.GetValue(_debugOption);
+            
+            AssemblyName assembly = Assembly.GetExecutingAssembly().GetName();
+            LoggerConfiguration config = new LoggerConfiguration().MinimumLevel.Is(Terminal.IsDebugging ? LogEventLevel.Debug : LogEventLevel.Information);
+            if (Terminal.IsDebugging) config.WriteTo.Console();
+            Log.Logger = config.CreateLogger();
+
+            Log.Information("{AssemblyName} [Version {AssemblyVersion}]", assembly.Name, assembly.Version);
+            Log.Debug("Running in: {GetCurrentDirectory}", Directory.GetCurrentDirectory());
+
+            ModuleManager.RegisterCommands(rootCommand);
+            rootCommand.SetAction(HandleRootCommand);
 
             try
             {
@@ -28,7 +38,7 @@ namespace UShell.Cli
             }
             catch (Exception ex)
             {
-                Console.WriteLine(ex);
+                Terminal.PrintError(ex);
                 throw;
             }
         }
