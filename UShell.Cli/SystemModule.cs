@@ -1,16 +1,22 @@
 ﻿// Copyright 2026 Entex Interactive
 
 using System.Reflection;
+using Spectre.Console.Cli;
 using UShell.Core.Interfaces;
 
 namespace UShell.Cli
 {
     public sealed class SystemModule : ICommandModule
     {
-        public void Register(Command rootCommand)
+        public void Register(IConfigurator config)
         {
-            IEnumerable<Type> types = Assembly.GetExecutingAssembly().GetTypes().Where(t => typeof(Command).IsAssignableFrom(t) && !t.IsAbstract && t != typeof(Command));
-            foreach (Type type in types) rootCommand.Add((Command)Activator.CreateInstance(type)!);
+            config.AddCommand<ClearCommand>("clear").WithDescription("Clears the console");
+            config.AddCommand<ClearCommand>("cls").WithDescription("Clears the console");
+            
+            config.AddCommand<ListCommand>("list").WithDescription("Lists all loaded modules.");
+            config.AddCommand<InfoCommand>("info").WithDescription("Displays the application info.");
+            
+            config.AddCommand<RunCommand>("run");
         }
     }
 }

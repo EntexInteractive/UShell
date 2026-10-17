@@ -1,6 +1,7 @@
 ﻿using System.Reflection;
 using System.Runtime.Loader;
 using Microsoft.Extensions.DependencyInjection;
+using Spectre.Console.Cli;
 using UShell.Core.Interfaces;
 
 namespace UShell.Core
@@ -42,8 +43,8 @@ namespace UShell.Core
         /// <summary>
         /// Registers the currently loaded modules with <see cref="System.CommandLine"/>.
         /// </summary>
-        /// <param name="root"></param>
-        public static void RegisterCommands(RootCommand root)
+        /// <param name="config"></param>
+        public static void RegisterCommands(IConfigurator config)
         {
             foreach (Assembly assembly in LoadModules())
             {
@@ -52,7 +53,7 @@ namespace UShell.Core
                 {
                     Log.Information("Registered module: {TypeName}", type.Name);
                     ICommandModule commandModule = (ICommandModule)Activator.CreateInstance(type)!;
-                    commandModule.Register(root);
+                    commandModule.Register(config);
                 }
             }
         }

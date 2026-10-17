@@ -1,13 +1,10 @@
 ﻿// Copyright 2026 Entex Interactive
 
-using System.CommandLine;
+using Spectre.Console.Cli;
 
 namespace UShell.IO.Files
 {
-    public class ZipCommand : Command
+    public class ZipCommand
     {
-        public ZipCommand() : base("zip", "Zips files in a directory.")
-        {
-        }
     }
 }
