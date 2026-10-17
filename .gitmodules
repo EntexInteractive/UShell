@@ -1,0 +1,7 @@
+[submodule "UShell.Perforce"]
+	path = UShell.Perforce
+	url = https://github.com/EntexInteractive/UShell.Perforce.git
+
+[submodule "UShell.Unreal"]
+	path = UShell.Unreal
+	url = https://github.com/EntexInteractive/UShell.Unreal.git
