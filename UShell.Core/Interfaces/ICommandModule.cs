@@ -1,4 +1,6 @@
-﻿namespace UShell.Core.Interfaces
+﻿using Spectre.Console.Cli;
+
+namespace UShell.Core.Interfaces
 {
     /// <summary>
     /// Defines a module using <see cref="System.CommandLine"/>.
@@ -8,7 +10,7 @@
         /// <summary>
         /// Registers the module with UShell.
         /// </summary>
-        /// <param name="rootCommand">The <see cref="System.CommandLine"/> root command.</param>
-        void Register(Command rootCommand);
+        /// <param name="config">The <see cref="IConfigurator"/> config.</param>
+        void Register(IConfigurator config);
     }
 }

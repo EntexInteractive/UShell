@@ -34,19 +34,22 @@
     </PropertyGroup>
 
     <ItemGroup>
+      <PackageReference Include="EntexInteractive.Extensions" Version="10.0.3" />
       <PackageReference Include="Serilog" Version="4.4.0" />
       <PackageReference Include="Serilog.Sinks.Console" Version="6.1.1" />
-      <PackageReference Include="System.CommandLine" Version="2.0.10" />
+      <PackageReference Include="Spectre.Console" Version="0.57.2" />
+      <PackageReference Include="Spectre.Console.Cli" Version="0.57.2" />
     </ItemGroup>
 
     <ItemGroup>
         <Using Include="Serilog" />
-        <Using Include="System.CommandLine" />
+        <Using Include="Spectre.Console.Cli" />
     </ItemGroup>
 
     <ItemGroup>
       <ProjectReference Include="..\UShell.Core\UShell.Core.csproj" />
       <ProjectReference Include="..\UShell.IO\UShell.IO.csproj" />
+      <ProjectReference Include="..\UShell.Perforce\UShell.Perforce.csproj" />
       <ProjectReference Include="..\UShell.Tests\UShell.Tests.csproj" />
     </ItemGroup>
 

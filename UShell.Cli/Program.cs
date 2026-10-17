@@ -1,66 +1,87 @@
-﻿using System.CommandLine.Help;
+﻿// Copyright 2026 Entex Interactive
+
 using System.Reflection;
+using System.Text.RegularExpressions;
+using Entexinteractive.Extensions;
+using Serilog;
 using Serilog.Events;
+using Spectre.Console;
+using Spectre.Console.Cli;
 using UShell.Core;
 using UShell.Core.Utils;
 
-namespace UShell.Cli
+namespace UShell.CLi
 {
     internal static class Program
     {
-        private static Option<bool> _versionOption = new("--version", ["-v"]);
-        private static Option<bool> _debugOption = new("-log");
-
-        static async Task Main(string[] args)
+        private static async Task<int> Main(string[] args)
         {
-            RootCommand rootCommand = new("UShell - A cross-platform modular command line.");
-            rootCommand.Options.RemoveAt(1);
-            rootCommand.Add(_versionOption);
-            rootCommand.Add(_debugOption);
-            
-            ParseResult parseResult = rootCommand.Parse(args);
-            Terminal.IsDebugging = parseResult.GetValue(_debugOption);
-            
             AssemblyName assembly = Assembly.GetExecutingAssembly().GetName();
-            LoggerConfiguration config = new LoggerConfiguration().MinimumLevel.Is(Terminal.IsDebugging ? LogEventLevel.Debug : LogEventLevel.Information);
-            if (Terminal.IsDebugging) config.WriteTo.Console();
-            Log.Logger = config.CreateLogger();
 
+            // Bootstrap debug detection before configuring logging.
+            Terminal.IsDebugging = args.Contains("-log", StringComparer.OrdinalIgnoreCase);
+            LoggerConfiguration loggerConfig = new LoggerConfiguration().MinimumLevel.Is(Terminal.IsDebugging ? LogEventLevel.Debug : LogEventLevel.Information);
+            if (Terminal.IsDebugging) loggerConfig.WriteTo.Console();
+
+            Log.Logger = loggerConfig.CreateLogger();
             Log.Information("{AssemblyName} [Version {AssemblyVersion}]", assembly.Name, assembly.Version);
-            Log.Debug("Running in: {GetCurrentDirectory}", Directory.GetCurrentDirectory());
+            Log.Debug("Running in: {CurrentDirectory}", Directory.GetCurrentDirectory());
 
-            ModuleManager.RegisterCommands(rootCommand);
-            rootCommand.SetAction(HandleRootCommand);
+            CommandApp app = new CommandApp();
+            app.Configure(config =>
+            {
+                config.SetApplicationName("UShell");
+
+                config.SetExceptionHandler((ex, resolver) =>
+                {
+                    Terminal.PrintError(ex);
+                    Log.Error(ex, "Command execution failed");
+                });
+
+                ModuleManager.RegisterCommands(config);
+            });
 
             try
             {
-                await rootCommand.Parse(args).InvokeAsync();
+                if (args.Length > 0) return await app.RunAsync(args);
+
+                while (true)
+                {
+                    AnsiConsole.Markup("[blue]UShell[/] [grey]>[/] ");
+
+                    string? input = Console.ReadLine();
+
+                    if (input is null || input.Equals("exit", StringComparison.OrdinalIgnoreCase)) break;
+                    if (string.IsNullOrWhiteSpace(input)) continue;
+                    
+                    string[] commandArgs = SplitArguments(input);
+                    
+                    try
+                    {
+                        await app.RunAsync(commandArgs);
+                    }
+                    catch (OperationCanceledException)
+                    {
+                        AnsiConsole.MarkupLine("\n[yellow]Command cancelled.[/]");
+                    }
+                }
+
+                return 0;
             }
             catch (Exception ex)
             {
                 Terminal.PrintError(ex);
                 throw;
             }
+            finally
+            {
+                await Log.CloseAndFlushAsync();
+            }
         }
 
-        private static void HandleRootCommand(ParseResult result)
+        private static string[] SplitArguments(string input)
         {
-            if (result.GetValue(_versionOption))
-            {
-                AssemblyName[] modules = ModuleManager.Modules.Select(m => m.GetName()).ToArray();
-                int width = modules.Max(e => e.Name?.Length ?? 0) + 1;
-
-                foreach (AssemblyName module in modules)
-                {
-                    if (string.IsNullOrEmpty(module.Name)) continue;
-                    Terminal.WriteLine($"{module.Name.PadRight(width)} v{module.Version}");
-                }
-                
-                return;
-            }
-
-            HelpAction helpAction = new HelpAction();
-            helpAction.Invoke(result);
+            return Regex.Matches(input, @"[\""].+?[\""]|[^ ]+").Cast<Match>().Select(m => m.Value.Replace("\"", "")).ToArray();
         }
     }
 }

@@ -7,6 +7,34 @@ namespace UShell.Core.Utils
     /// </summary>
     public class FileSystemUtility
     {
+        /// <summary>
+        /// Gets the directory path used for storing application-specific settings.
+        /// Automatically ensures that the directory exists within the user's ApplicationData folder.
+        /// </summary>
+        public string SettingsDirectory
+        {
+            get
+            {
+                string settingsDir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "UShell");
+                if (!Directory.Exists(settingsDir)) Directory.CreateDirectory(settingsDir);
+                return settingsDir;
+            }
+        }
+
+        /// <summary>
+        /// Gets the directory path used for storing temporary files.
+        /// Automatically ensures that the directory exists within the system's temporary folder.
+        /// </summary>
+        public string TempDirectory
+        {
+            get
+            {
+                string tempDir = Path.Combine(Path.GetTempPath(), "UShell");
+                if (!Directory.Exists(tempDir)) Directory.CreateDirectory(tempDir);
+                return tempDir;
+            }
+        }
+
         public static void DeleteDirectory(string path)
         {
             if (!Directory.Exists(path)) return;

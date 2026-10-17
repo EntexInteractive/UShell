@@ -1,8 +1,9 @@
-﻿using System.CommandLine;
-using System.Reflection;
+﻿using System.Reflection;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Spectre.Console.Cli;
 using UShell.Core.Interfaces;
+using UShell.IO.Files;
 
 namespace UShell.IO
 {
@@ -11,16 +12,21 @@ namespace UShell.IO
     /// </summary>
     public class IOModule : ICommandModule, IServiceModule
     {
-        public void Register(Command rootCommand)
+        /*public void Register(Command rootCommand)
         {
             IEnumerable<Type> types = Assembly.GetExecutingAssembly().GetTypes().Where(t => typeof(Command).IsAssignableFrom(t) && !t.IsAbstract && t != typeof(Command));
             foreach (Type type in types) rootCommand.Add((Command)Activator.CreateInstance(type)!);
-        }
+        }*/
 
         public void RegisterServices(IServiceCollection services)
         {
             IEnumerable<Type> types = Assembly.GetExecutingAssembly().GetTypes().Where(t => typeof(IHostedService).IsAssignableFrom(t) && !t.IsAbstract && t != typeof(IHostedService));
             foreach (Type type in types) services.AddSingleton(typeof(IHostedService), type);
+        }
+
+        public void Register(IConfigurator config)
+        {
+            config.AddCommand<ProtectCommand>("protect");
         }
     }
 }

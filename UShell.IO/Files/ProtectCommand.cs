@@ -1,53 +1,68 @@
 ﻿// Copyright 2026 Entex Interactive
 
-using System.CommandLine;
+using System.ComponentModel;
 using System.Diagnostics;
+using Spectre.Console;
+using Spectre.Console.Cli;
 using UShell.Core.Utils;
 
 namespace UShell.IO.Files
 {
-    public class ProtectCommand : Command
+    public sealed class ProtectCommand : Command<ProtectSettings>
     {
-        private readonly Option<string> _pathOption = new("path", ["-p"]) { Description = "Path to a file or directory." };
-        private readonly Option<bool> _recursiveOption = new("--recursive", ["-R"]) { Description = "Recursively" };
-        private readonly Option<bool> _writeableOption = new("--writeable") { Description = "Marks files as writeable." };
-        private readonly Option<bool> _hiddenOption = new("--hidden") { Description = "Marks files as hidden." };
-        
-        public ProtectCommand() : base("protect", "Protects files by marking them as read-only.")
+        public override int Execute(CommandContext context, ProtectSettings settings, CancellationToken cancellationToken)
         {
-            this.Add(_pathOption);
-            this.Add(_recursiveOption);
-            this.Add(_writeableOption);
-            //this.Add(_hiddenOption);
-            this.SetAction(HandleCommand);
-        }
+            string path = settings.Path ?? Directory.GetCurrentDirectory();
 
-        private void HandleCommand(ParseResult args)
-        {
-            string path = args.GetValue(_pathOption) ?? Directory.GetCurrentDirectory();
-            bool recursive = args.GetValue(_recursiveOption);
-            bool writeable = args.GetValue(_writeableOption);
-            bool hidden = args.GetValue(_hiddenOption);
-            
+            if (!File.Exists(path) && !Directory.Exists(path))
+            {
+                AnsiConsole.MarkupLine($"[red]Path does not exist:[/] {Markup.Escape(path)}");
+                return 1;
+            }
+
             Stopwatch sw = Stopwatch.StartNew();
-            string[] files = Directory.GetFiles(path, "*.*", recursive ? SearchOption.AllDirectories : SearchOption.TopDirectoryOnly);
+            string[] files = File.Exists(path) ? [path] : Directory.GetFiles(path, "*", settings.Recursive ? SearchOption.AllDirectories : SearchOption.TopDirectoryOnly);
+
             for (int i = 0; i < files.Length; i++)
             {
                 Terminal.Progress("Processing", i, files.Length, sw.Elapsed);
+
                 FileAttributes attributes = File.GetAttributes(files[i]);
-                if (writeable)
-                {
+
+                if (settings.Writeable)
                     attributes &= ~FileAttributes.ReadOnly;
-                }
                 else
-                {
                     attributes |= FileAttributes.ReadOnly;
-                }
-                
+
+                if (settings.Hidden)
+                    attributes |= FileAttributes.Hidden;
+
                 File.SetAttributes(files[i], attributes);
             }
-            
-            Terminal.PrintSuccess($"Successfully marked {files.Length:N0} files as {(writeable ? "writeable" : "readable")}.");
+
+            sw.Stop();
+
+            Terminal.PrintSuccess($"Successfully made {files.Length:N0} files {(settings.Writeable ? "writeable" : "read-only")}.");
+            return 0;
         }
     }
+
+    public sealed class ProtectSettings : CommandSettings
+    {
+        [CommandOption("-p|--path <PATH>")]
+        [Description("Path to a file or directory.")]
+        public string? Path { get; set; }
+
+        [CommandOption("-R|--recursive")]
+        [Description("Process directories recursively.")]
+        public bool Recursive { get; set; }
+
+        [CommandOption("--writeable")]
+        [Description("Marks files as writeable.")]
+        public bool Writeable { get; set; }
+
+        [CommandOption("--hidden")]
+        [Description("Marks files as hidden.")]
+        public bool Hidden { get; set; }
+    }   
 }

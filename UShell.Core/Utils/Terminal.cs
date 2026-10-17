@@ -38,7 +38,7 @@ namespace UShell.Core.Utils
             lock (_consoleLock)
             {
                 Console.ForegroundColor = color;
-                Console.WriteLine($"> {value}");
+                Console.WriteLine(value);
                 Console.ResetColor();
             }
         }
