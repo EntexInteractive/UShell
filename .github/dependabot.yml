@@ -1,0 +1,20 @@
+version: 2
+updates:
+
+  - package-ecosystem: "nuget"
+    directory: "/UShell.Core"
+    schedule:
+      interval: "daily"
+    target-branch: "main"
+
+  - package-ecosystem: "nuget"
+    directory: "/UShell.Cli"
+    schedule:
+      interval: "daily"
+    target-branch: "main"
+
+  - package-ecosystem: "nuget"
+    directory: "/UShell.IO"
+    schedule:
+      interval: "daily"
+    target-branch: "main"
